@@ -12,7 +12,7 @@
 
 A private, secure personal AI platform with persistent, structured, user-owned memory.
 
-[🚀 Live Demo](https://mindora-web.vercel.app) · [📖 Docs](#documentation) · [🐛 Issues](https://github.com/siddharthsoni501/mindora/issues)
+[🚀 Live Demo](https://mindora-ai-platform.vercel.app) · [📖 Docs](#documentation) · [🐛 Issues](https://github.com/siddharthsoni501/mindora/issues)
 
 </div>
 
@@ -99,7 +99,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The web app is configured for one-click Vercel deployment.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/siddharthsoni501/mindora&root=apps/web)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/siddharthsoni501/mindora&root-directory=apps/web)
 
 ### Manual Deployment
 
