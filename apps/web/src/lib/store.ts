@@ -33,14 +33,73 @@ export interface Conversation {
   updatedAt: string
 }
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'id-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36)
+}
+
+const DEFAULT_MEMORIES: Memory[] = [
+  {
+    id: 'mem-1',
+    type: 'FACT',
+    content: 'Prefers concise, actionable responses with code examples',
+    confidence: 0.95,
+    source: 'user_preference',
+    confirmed: true,
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    lastUsed: new Date().toISOString(),
+  },
+  {
+    id: 'mem-2',
+    type: 'FACT',
+    content: 'Primary development stack includes TypeScript, Next.js, and Python',
+    confidence: 0.92,
+    source: 'conversation',
+    confirmed: true,
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    lastUsed: new Date().toISOString(),
+  },
+  {
+    id: 'mem-3',
+    type: 'EPISODE',
+    content: 'Launched MINDORA personal AI platform with NVIDIA NIM integration',
+    confidence: 0.89,
+    source: 'conversation',
+    confirmed: true,
+    enabled: true,
+    createdAt: new Date().toISOString(),
+    lastUsed: new Date().toISOString(),
+  },
+  {
+    id: 'mem-4',
+    type: 'SKILL',
+    content: 'Weekly Planning Workflow: Review calendar -> Extract priority goals -> Format daily agenda',
+    confidence: 0.91,
+    source: 'skill_builder',
+    confirmed: true,
+    enabled: true,
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    lastUsed: new Date().toISOString(),
+  },
+]
+
 // ──── Memories ────
 
 export function getMemories(): Memory[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return DEFAULT_MEMORIES
   try {
-    return JSON.parse(localStorage.getItem('mindora_memories') || '[]')
+    const raw = localStorage.getItem('mindora_memories')
+    if (!raw) {
+      localStorage.setItem('mindora_memories', JSON.stringify(DEFAULT_MEMORIES))
+      return DEFAULT_MEMORIES
+    }
+    return JSON.parse(raw)
   } catch {
-    return []
+    return DEFAULT_MEMORIES
   }
 }
 
@@ -48,7 +107,7 @@ export function saveMemory(memory: Omit<Memory, 'id' | 'createdAt'>): Memory {
   const memories = getMemories()
   const newMemory: Memory = {
     ...memory,
-    id: crypto.randomUUID(),
+    id: generateId(),
     createdAt: new Date().toISOString(),
   }
   memories.unshift(newMemory)
@@ -91,14 +150,41 @@ export function getActiveMemories(): Memory[] {
   return getMemories().filter(m => m.enabled)
 }
 
+const DEFAULT_CONVERSATIONS: Conversation[] = [
+  {
+    id: 'conv-starter',
+    title: 'Welcome to MINDORA',
+    messages: [
+      {
+        id: 'msg-starter-1',
+        role: 'assistant',
+        content: "👋 Welcome to **MINDORA**! I'm your private personal AI powered by NVIDIA NIM.\n\nI have persistent, user-controlled memory. I already recall your initial preferences, and I'll extract and organize new facts, episodes, and skills as we talk.\n\nAsk me anything, test my memory, or configure your NVIDIA API key in the top bar anytime!",
+        model: 'nemotron-mini-4b-instruct',
+        route: 'Fast',
+        routeReason: 'Onboarding welcome',
+        timestamp: new Date().toISOString(),
+      },
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
+
 // ──── Conversations ────
 
 export function getConversations(): Conversation[] {
-  if (typeof window === 'undefined') return []
+  if (typeof window === 'undefined') return DEFAULT_CONVERSATIONS
   try {
-    return JSON.parse(localStorage.getItem('mindora_conversations') || '[]')
+    const raw = localStorage.getItem('mindora_conversations')
+    if (!raw) {
+      localStorage.setItem('mindora_conversations', JSON.stringify(DEFAULT_CONVERSATIONS))
+      return DEFAULT_CONVERSATIONS
+    }
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    return DEFAULT_CONVERSATIONS
   } catch {
-    return []
+    return DEFAULT_CONVERSATIONS
   }
 }
 
@@ -108,7 +194,7 @@ export function getConversation(id: string): Conversation | null {
 
 export function createConversation(): Conversation {
   const conv: Conversation = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     title: 'New conversation',
     messages: [],
     createdAt: new Date().toISOString(),
@@ -116,7 +202,9 @@ export function createConversation(): Conversation {
   }
   const convs = getConversations()
   convs.unshift(conv)
-  localStorage.setItem('mindora_conversations', JSON.stringify(convs))
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mindora_conversations', JSON.stringify(convs))
+  }
   return conv
 }
 
@@ -127,7 +215,7 @@ export function saveMessage(convId: string, message: Omit<Message, 'id' | 'times
 
   const newMsg: Message = {
     ...message,
-    id: crypto.randomUUID(),
+    id: generateId(),
     timestamp: new Date().toISOString(),
   }
   conversations[idx].messages.push(newMsg)
@@ -138,13 +226,17 @@ export function saveMessage(convId: string, message: Omit<Message, 'id' | 'times
     conversations[idx].title = message.content.slice(0, 50)
   }
 
-  localStorage.setItem('mindora_conversations', JSON.stringify(conversations))
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mindora_conversations', JSON.stringify(conversations))
+  }
   return newMsg
 }
 
 export function deleteConversation(id: string): void {
   const convs = getConversations().filter(c => c.id !== id)
-  localStorage.setItem('mindora_conversations', JSON.stringify(convs))
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mindora_conversations', JSON.stringify(convs))
+  }
 }
 
 // ──── NVIDIA API Key ────
